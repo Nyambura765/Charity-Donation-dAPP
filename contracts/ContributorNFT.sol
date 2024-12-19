@@ -36,7 +36,7 @@ contract ContributorNFT is ERC721URIStorage {
         // Mint the NFT to the contributor
         _safeMint(contributor, tokenId);
 
-        // Set the token URI for metadata (could include achievements, images, etc.)
+        // Set the token URI for metadata 
         _setTokenURI(tokenId, tokenURI);
 
         // Store the mapping for the contributor's NFT
