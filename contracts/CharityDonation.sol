@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.20;
 
 import "./ContributorNFT.sol";
 
@@ -42,6 +42,8 @@ contract CampaignDonation {
     mapping(uint => Transaction) public transactions;
     uint public transactionCount;
 
+    ContributorNFT public contributorNFT;
+
     // Events
     event CampaignCreated(uint id, address creator, string title, uint targetAmount);
     event CampaignStatusUpdated(uint id, bool active);
@@ -51,7 +53,8 @@ contract CampaignDonation {
     event TransactionApproved(uint txId, address signer);
     event TransactionExecuted(uint txId, address recipient, uint amount);
     event TopContributorsRewarded(uint campaignId, address[] topContributors);
-   //Modifiers to implement RBAC
+
+    // Modifiers to implement RBAC
     modifier onlyAdmin() {
         require(admins[msg.sender], "Not an admin");
         _;
@@ -66,8 +69,9 @@ contract CampaignDonation {
         require(_id < campaigns.length, "Campaign does not exist");
         _;
     }
-   // Constructor
-    constructor(address[] memory _admins, address[] memory _signers, uint _requiredSignatures , address _ContributorNFTAddress ) {
+
+    // Constructor
+    constructor(address[] memory _admins, address[] memory _signers, uint _requiredSignatures, address _ContributorNFTAddress) {
         require(_requiredSignatures > 0, "Signatures required must be greater than 0");
         require(_signers.length >= _requiredSignatures, "Not enough signers");
 
@@ -81,7 +85,7 @@ contract CampaignDonation {
 
         contractOwner = msg.sender;
         requiredSignatures = _requiredSignatures;
-        ContributorNFTAddress = _ContributorNFTAddress;
+        contributorNFT = ContributorNFT(_ContributorNFTAddress);
     }
 
     // Create a new campaign
@@ -89,7 +93,7 @@ contract CampaignDonation {
         require(_targetAmount > 0, "Target amount must be greater than zero");
 
         Campaign memory newCampaign = Campaign({
-            id: campaigns.length,  
+            id: campaigns.length,
             creator: msg.sender,
             title: _title,
             description: _description,
@@ -138,14 +142,12 @@ contract CampaignDonation {
         emit DonationReceived(_id, msg.sender, msg.value);
     }
 
-
     // Get the top contributors for a campaign
     function getTopContributors(uint _campaignId) internal view returns (address[] memory) {
         Donation[] memory campaignDonations = donations[_campaignId];
-        address[] memory addressList;  // Array for storing addresses
-        uint[] memory amounts;         // Array for storing amounts
+        address[] memory topContributors = new address[](3);
+        uint[] memory topAmounts = new uint[](3);
 
-  // Iterate over donations to find the top 3 contributors
         for (uint i = 0; i < campaignDonations.length; i++) {
             address donor = campaignDonations[i].donor;
             uint amount = campaignDonations[i].amount;
@@ -170,19 +172,40 @@ contract CampaignDonation {
 
         return topContributors;
     }
-// Reward the top 3 contributors with NFTs
+    //Function for TokenURI generation.
+    function uint2str(uint _i) internal pure returns (string memory) {
+    if (_i == 0) {
+        return "0";
+    }
+    uint j = _i;
+    uint len;
+    while (j != 0) {
+        len++;
+        j /= 10;
+    }
+    bytes memory bstr = new bytes(len);
+    while (_i != 0) {
+        bstr[--len] = bytes1(uint8(48 + _i % 10));
+        _i /= 10;
+    }
+    return string(bstr);
+}
+
+
+    // Reward the top 3 contributors with NFTs
     function rewardTopContributors(uint _campaignId) external onlyAdmin validCampaign(_campaignId) {
         address[] memory topContributors = getTopContributors(_campaignId);
 
         for (uint i = 0; i < topContributors.length; i++) {
-            if (topContributors[i] != address(0)) { // Make sure there's a valid contributor
-                ContributorNFT.mintReward(topContributors[i]);
+            if (topContributors[i] != address(0)) {
+                string memory tokenURI = string(abi.encodePacked("https://example.com/metadata/", uint2str(i + 1)));
+
+                contributorNFT.mintNFT(topContributors[i], tokenURI);
             }
         }
 
         emit TopContributorsRewarded(_campaignId, topContributors);
     }
-}
 
     // Withdraw funds with multisignature approval
     function withdrawFunds(uint _campaignId, uint _amount, address payable _recipient) external onlySigner validCampaign(_campaignId) {

@@ -1,19 +1,27 @@
-import { ethers } from "hardhat";
+import hre from "hardhat";
+const { ethers } = require("hardhat");
+
 
 async function main() {
-  // Get the deployer's account
-  const [deployer] = await ethers.getSigners();
-  console.log("Deploying contracts with the account:", deployer.address);
+  // Compile the contract (if needed)
+  await hre.run('compile');
 
-  // Deploy the CampaignDonation contract
-  const CampaignDonation = await ethers.getContractFactory("CampaignDonation");
-  const campaignDonation = await CampaignDonation.deploy(); 
+  // Get the contract factory
+  const ContractFactory = await ethers.getContractFactory("CampaignDonation");
 
-  
+  // Deploy the contract
+  console.log("Deploying contract...");
+  const contract = await ContractFactory.deploy(/* constructor arguments */);
+
+  // Wait for the deployment to complete
+  await contract.deployed();
+  console.log(`Contract deployed to: ${contract.address}`);
 }
 
-// Execute the deployment function
-main().catch((error) => {
-  console.error("Error during deployment:", error);
-  process.exit(1);
-});
+// Run the script
+main()
+  .then(() => process.exit(0))
+  .catch(error => {
+    console.error(error);
+    process.exit(1);
+  });

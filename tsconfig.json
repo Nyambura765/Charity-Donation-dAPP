@@ -6,7 +6,11 @@
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "skipLibCheck": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "typeRoots": ["./node_modules/@types", ],
+    "types": ["node", "chai", "chai-as-promised", "mocha", "dotenv"]
     
-  }
+    
+  },
+  "include": ["./scripts",  "./tests"]
 }
