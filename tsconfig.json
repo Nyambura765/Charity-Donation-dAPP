@@ -8,9 +8,9 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "typeRoots": ["./node_modules/@types", ],
-    "types": ["node", "chai", "chai-as-promised", "mocha", "dotenv"]
+    "types": ["node", "chai", "chai-as-promised", "mocha", "dotenv", "hardhat"]
     
     
   },
-  "include": ["./scripts",  "./tests"]
+  "include": ["./scripts",  "./tests", "./typechain-types"]
 }
